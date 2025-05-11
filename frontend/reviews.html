@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reviews Service - GraphQL</title>
+</head>
+<body>
+    <h1>Reviews Service (GraphQL)</h1>
+    
+    <nav>
+        <a href="index.html">Home</a>
+    </nav>
+    
+    <div>
+        <h2>Get Reviews for Product</h2>
+        <div>
+            <label for="product-id-search">Product ID:</label>
+            <input type="text" id="product-id-search" name="product-id-search">
+            <button onclick="getReviewsForProduct()">Get Reviews</button>
+        </div>
+        <div id="reviews-list"></div>
+    </div>
+
+    <div>
+        <h2>Get Review by ID</h2>
+        <div>
+            <label for="review-id">Review ID:</label>
+            <input type="text" id="review-id" name="review-id">
+            <button onclick="getReviewById()">Get Review</button>
+        </div>
+        <div id="review-details"></div>
+    </div>
+
+    <div>
+        <h2>Create New Review</h2>
+        <form id="create-review-form">
+            <div>
+                <label for="product-id">Product ID:</label>
+                <input type="text" id="product-id" name="product-id" required>
+            </div>
+            <div>
+                <label for="user-id">User ID:</label>
+                <input type="text" id="user-id" name="user-id" required>
+            </div>
+            <div>
+                <label for="rating">Rating (1-5):</label>
+                <input type="number" id="rating" name="rating" min="1" max="5" required>
+            </div>
+            <div>
+                <label for="comment">Comment:</label>
+                <textarea id="comment" name="comment" required></textarea>
+            </div>
+            <button type="button" onclick="createReview()">Create Review</button>
+        </form>
+        <div id="create-result"></div>
+    </div>
+
+    <script>
+        function getReviewsForProduct() {
+            const productId = document.getElementById('product-id-search').value;
+            if (!productId) {
+                document.getElementById('reviews-list').innerHTML = 
+                    '<p>Please enter a product ID</p>';
+                return;
+            }
+
+            fetch(`/api/reviews/product/${productId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const reviewsList = document.getElementById('reviews-list');
+                    if (data.data && data.data.reviews && data.data.reviews.length > 0) {
+                        let html = '<ul>';
+                        data.data.reviews.forEach(review => {
+                            html += `<li>ID: ${review.id}, Rating: ${review.rating}, Comment: ${review.comment}</li>`;
+                        });
+                        html += '</ul>';
+                        reviewsList.innerHTML = html;
+                    } else if (data.errors) {
+                        reviewsList.innerHTML = `<p>Error: ${data.errors[0].message}</p>`;
+                    } else {
+                        reviewsList.innerHTML = '<p>No reviews found</p>';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('reviews-list').innerHTML = `<p>Error: ${error.message}</p>`;
+                });
+        }
+
+        function getReviewById() {
+            const reviewId = document.getElementById('review-id').value;
+            if (!reviewId) {
+                document.getElementById('review-details').innerHTML = 
+                    '<p>Please enter a review ID</p>';
+                return;
+            }
+
+            fetch(`/api/reviews/${reviewId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const reviewDetails = document.getElementById('review-details');
+                    if (data.data && data.data.review) {
+                        const review = data.data.review;
+                        reviewDetails.innerHTML = 
+                            `<p>ID: ${review.id}</p>
+                            <p>Product ID: ${review.productId}</p>
+                            <p>User ID: ${review.userId}</p>
+                            <p>Rating: ${review.rating}</p>
+                            <p>Comment: ${review.comment}</p>
+                            <p>Created: ${review.createdAt}</p>`;
+                    } else if (data.errors) {
+                        reviewDetails.innerHTML = `<p>Error: ${data.errors[0].message}</p>`;
+                    } else {
+                        reviewDetails.innerHTML = '<p>Review not found</p>';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('review-details').innerHTML = `<p>Error: ${error.message}</p>`;
+                });
+        }
+
+        function createReview() {
+            const productId = document.getElementById('product-id').value;
+            const userId = document.getElementById('user-id').value;
+            const rating = parseInt(document.getElementById('rating').value);
+            const comment = document.getElementById('comment').value;
+
+            fetch('/api/reviews/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    productId: productId,
+                    userId: userId,
+                    rating: rating,
+                    comment: comment
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.data && data.data.createReview) {
+                    document.getElementById('create-result').innerHTML = 
+                        `<p>Review created successfully! ID: ${data.data.createReview.id}</p>`;
+                    // Clear form
+                    document.getElementById('product-id').value = '';
+                    document.getElementById('user-id').value = '';
+                    document.getElementById('rating').value = '';
+                    document.getElementById('comment').value = '';
+                } else if (data.errors) {
+                    document.getElementById('create-result').innerHTML = 
+                        `<p>Error: ${data.errors[0].message}</p>`;
+                }
+            })
+            .catch(error => {
+                document.getElementById('create-result').innerHTML = 
+                    `<p>Error: ${error.message}</p>`;
+            });
+        }
+    </script>
+</body>
+</html> 

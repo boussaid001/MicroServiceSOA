@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package product;
+option go_package = "github.com/yourusername/go-microservices-project/proto/product";
+
+service ProductService {
+  rpc GetProduct(GetProductRequest) returns (Product) {}
+  rpc ListProducts(ListProductsRequest) returns (ListProductsResponse) {}
+  rpc CreateProduct(CreateProductRequest) returns (Product) {}
+  rpc UpdateProduct(UpdateProductRequest) returns (Product) {}
+  rpc DeleteProduct(DeleteProductRequest) returns (DeleteProductResponse) {}
+}
+
+message GetProductRequest {
+  string id = 1;
+}
+
+message ListProductsRequest {
+  int32 page = 1;
+  int32 limit = 2;
+  string category = 3;
+}
+
+message ListProductsResponse {
+  repeated Product products = 1;
+  int32 total = 2;
+}
+
+message CreateProductRequest {
+  string name = 1;
+  string description = 2;
+  float price = 3;
+  int32 stock = 4;
+  string category = 5;
+  repeated string images = 6;
+}
+
+message UpdateProductRequest {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  float price = 4;
+  int32 stock = 5;
+  string category = 6;
+  repeated string images = 7;
+}
+
+message DeleteProductRequest {
+  string id = 1;
+}
+
+message DeleteProductResponse {
+  bool success = 1;
+}
+
+message Product {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  float price = 4;
+  int32 stock = 5;
+  string category = 6;
+  repeated string images = 7;
+  string created_at = 8;
+  string updated_at = 9;
+}

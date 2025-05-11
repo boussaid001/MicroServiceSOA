@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users Service - REST API</title>
+</head>
+<body>
+    <h1>Users Service (REST API)</h1>
+    
+    <nav>
+        <a href="index.html">Home</a>
+    </nav>
+    
+    <div>
+        <h2>Get All Users</h2>
+        <button onclick="getUsers()">Get Users</button>
+        <div id="users-list"></div>
+    </div>
+
+    <div>
+        <h2>Create New User</h2>
+        <form id="create-user-form">
+            <div>
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div>
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div>
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="button" onclick="createUser()">Create User</button>
+        </form>
+        <div id="create-result"></div>
+    </div>
+
+    <div>
+        <h2>Get User by ID</h2>
+        <div>
+            <label for="user-id">User ID:</label>
+            <input type="text" id="user-id" name="user-id">
+            <button onclick="getUserById()">Get User</button>
+        </div>
+        <div id="user-details"></div>
+    </div>
+
+    <script>
+        function getUsers() {
+            fetch('/api/users/')
+                .then(response => response.json())
+                .then(data => {
+                    const usersList = document.getElementById('users-list');
+                    if (data && data.length > 0) {
+                        let html = '<ul>';
+                        data.forEach(user => {
+                            html += `<li>ID: ${user.id}, Username: ${user.username}, Email: ${user.email}</li>`;
+                        });
+                        html += '</ul>';
+                        usersList.innerHTML = html;
+                    } else {
+                        usersList.innerHTML = '<p>No users found</p>';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('users-list').innerHTML = `<p>Error: ${error.message}</p>`;
+                });
+        }
+
+        function createUser() {
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            fetch('/api/users/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: username,
+                    email: email,
+                    password: password
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('create-result').innerHTML = 
+                    `<p>User created successfully! ID: ${data.id}</p>`;
+                // Clear form
+                document.getElementById('username').value = '';
+                document.getElementById('email').value = '';
+                document.getElementById('password').value = '';
+                // Refresh user list
+                getUsers();
+            })
+            .catch(error => {
+                document.getElementById('create-result').innerHTML = 
+                    `<p>Error: ${error.message}</p>`;
+            });
+        }
+
+        function getUserById() {
+            const userId = document.getElementById('user-id').value;
+            if (!userId) {
+                document.getElementById('user-details').innerHTML = 
+                    '<p>Please enter a user ID</p>';
+                return;
+            }
+
+            fetch(`/api/users/${userId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById('user-details').innerHTML = 
+                            `<p>Error: ${data.error}</p>`;
+                    } else {
+                        document.getElementById('user-details').innerHTML = 
+                            `<p>ID: ${data.id}</p>
+                            <p>Username: ${data.username}</p>
+                            <p>Email: ${data.email}</p>
+                            <p>Created: ${data.createdAt}</p>`;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('user-details').innerHTML = 
+                        `<p>Error: ${error.message}</p>`;
+                });
+        }
+    </script>
+</body>
+</html> 

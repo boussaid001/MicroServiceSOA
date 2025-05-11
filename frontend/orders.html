@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orders Service - Kafka</title>
+</head>
+<body>
+    <h1>Orders Service (Kafka)</h1>
+    
+    <nav>
+        <a href="index.html">Home</a>
+    </nav>
+    
+    <div>
+        <h2>Get All Orders</h2>
+        <button onclick="getOrders()">Get Orders</button>
+        <div id="orders-list"></div>
+    </div>
+
+    <div>
+        <h2>Get Order by ID</h2>
+        <div>
+            <label for="order-id">Order ID:</label>
+            <input type="text" id="order-id" name="order-id">
+            <button onclick="getOrderById()">Get Order</button>
+        </div>
+        <div id="order-details"></div>
+    </div>
+
+    <div>
+        <h2>Get Order Status</h2>
+        <div>
+            <label for="status-order-id">Order ID:</label>
+            <input type="text" id="status-order-id" name="status-order-id">
+            <button onclick="getOrderStatus()">Get Status</button>
+        </div>
+        <div id="order-status"></div>
+    </div>
+
+    <div>
+        <h2>Create New Order</h2>
+        <form id="create-order-form">
+            <div>
+                <label for="user-id">User ID:</label>
+                <input type="text" id="user-id" name="user-id" required>
+            </div>
+            <div>
+                <label for="product-ids">Product IDs (comma separated):</label>
+                <input type="text" id="product-ids" name="product-ids" placeholder="1,2,3" required>
+            </div>
+            <div>
+                <label for="total">Total Price:</label>
+                <input type="number" id="total" name="total" step="0.01" required>
+            </div>
+            <button type="button" onclick="createOrder()">Create Order</button>
+        </form>
+        <div id="create-result"></div>
+    </div>
+
+    <script>
+        function getOrders() {
+            fetch('/api/orders/')
+                .then(response => response.json())
+                .then(data => {
+                    const ordersList = document.getElementById('orders-list');
+                    if (data && data.length > 0) {
+                        let html = '<ul>';
+                        data.forEach(order => {
+                            html += `<li>ID: ${order.id}, User: ${order.userId}, Status: ${order.status}, Total: $${order.totalPrice}</li>`;
+                        });
+                        html += '</ul>';
+                        ordersList.innerHTML = html;
+                    } else {
+                        ordersList.innerHTML = '<p>No orders found</p>';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('orders-list').innerHTML = `<p>Error: ${error.message}</p>`;
+                });
+        }
+
+        function getOrderById() {
+            const orderId = document.getElementById('order-id').value;
+            if (!orderId) {
+                document.getElementById('order-details').innerHTML = 
+                    '<p>Please enter an order ID</p>';
+                return;
+            }
+
+            fetch(`/api/orders/${orderId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById('order-details').innerHTML = 
+                            `<p>Error: ${data.error}</p>`;
+                    } else {
+                        const products = data.products ? data.products.map(p => p.id).join(', ') : 'None';
+                        document.getElementById('order-details').innerHTML = 
+                            `<p>ID: ${data.id}</p>
+                            <p>User ID: ${data.userId}</p>
+                            <p>Products: ${products}</p>
+                            <p>Total: $${data.totalPrice}</p>
+                            <p>Status: ${data.status}</p>
+                            <p>Created: ${data.createdAt}</p>`;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('order-details').innerHTML = 
+                        `<p>Error: ${error.message}</p>`;
+                });
+        }
+
+        function getOrderStatus() {
+            const orderId = document.getElementById('status-order-id').value;
+            if (!orderId) {
+                document.getElementById('order-status').innerHTML = 
+                    '<p>Please enter an order ID</p>';
+                return;
+            }
+
+            fetch(`/api/orders/status/${orderId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById('order-status').innerHTML = 
+                            `<p>Error: ${data.error}</p>`;
+                    } else {
+                        document.getElementById('order-status').innerHTML = 
+                            `<p>Order ID: ${data.orderId}</p>
+                            <p>Status: ${data.status}</p>
+                            <p>Last Updated: ${data.updatedAt}</p>`;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('order-status').innerHTML = 
+                        `<p>Error: ${error.message}</p>`;
+                });
+        }
+
+        function createOrder() {
+            const userId = document.getElementById('user-id').value;
+            const productIdsStr = document.getElementById('product-ids').value;
+            const total = parseFloat(document.getElementById('total').value);
+            
+            const productIds = productIdsStr.split(',').map(id => id.trim());
+            
+            fetch('/api/orders/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    userId: userId,
+                    productIds: productIds,
+                    total: total,
+                    status: "pending"
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('create-result').innerHTML = 
+                        `<p>Error: ${data.error}</p>`;
+                } else {
+                    document.getElementById('create-result').innerHTML = 
+                        `<p>Order created successfully! ID: ${data.id}</p>`;
+                    // Clear form
+                    document.getElementById('user-id').value = '';
+                    document.getElementById('product-ids').value = '';
+                    document.getElementById('total').value = '';
+                    // Refresh order list
+                    getOrders();
+                }
+            })
+            .catch(error => {
+                document.getElementById('create-result').innerHTML = 
+                    `<p>Error: ${error.message}</p>`;
+            });
+        }
+    </script>
+</body>
+</html> 

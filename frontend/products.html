@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products Service - gRPC</title>
+</head>
+<body>
+    <h1>Products Service (gRPC)</h1>
+    
+    <nav>
+        <a href="index.html">Home</a>
+    </nav>
+    
+    <div>
+        <h2>Get All Products</h2>
+        <div>
+            <label for="category">Category (optional):</label>
+            <input type="text" id="category" name="category">
+            <button onclick="getProducts()">Get Products</button>
+        </div>
+        <div id="products-list"></div>
+    </div>
+
+    <div>
+        <h2>Get Product by ID</h2>
+        <div>
+            <label for="product-id">Product ID:</label>
+            <input type="text" id="product-id" name="product-id">
+            <button onclick="getProductById()">Get Product</button>
+        </div>
+        <div id="product-details"></div>
+    </div>
+
+    <div>
+        <h2>Create New Product</h2>
+        <form id="create-product-form">
+            <div>
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div>
+                <label for="description">Description:</label>
+                <textarea id="description" name="description" required></textarea>
+            </div>
+            <div>
+                <label for="price">Price:</label>
+                <input type="number" id="price" name="price" step="0.01" required>
+            </div>
+            <div>
+                <label for="stock">Stock:</label>
+                <input type="number" id="stock" name="stock" required>
+            </div>
+            <div>
+                <label for="product-category">Category:</label>
+                <input type="text" id="product-category" name="product-category" required>
+            </div>
+            <button type="button" onclick="createProduct()">Create Product</button>
+        </form>
+        <div id="create-result"></div>
+    </div>
+
+    <script>
+        function getProducts() {
+            const category = document.getElementById('category').value;
+            const url = category ? 
+                `/api/products/?category=${encodeURIComponent(category)}` : 
+                '/api/products/';
+                
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const productsList = document.getElementById('products-list');
+                    if (data && data.Products && data.Products.length > 0) {
+                        let html = '<ul>';
+                        data.Products.forEach(product => {
+                            html += `<li>ID: ${product.id}, Name: ${product.name}, Price: $${product.price}</li>`;
+                        });
+                        html += '</ul>';
+                        productsList.innerHTML = html;
+                    } else {
+                        productsList.innerHTML = '<p>No products found</p>';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('products-list').innerHTML = `<p>Error: ${error.message}</p>`;
+                });
+        }
+
+        function getProductById() {
+            const productId = document.getElementById('product-id').value;
+            if (!productId) {
+                document.getElementById('product-details').innerHTML = 
+                    '<p>Please enter a product ID</p>';
+                return;
+            }
+
+            fetch(`/api/products/${productId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById('product-details').innerHTML = 
+                            `<p>Error: ${data.error}</p>`;
+                    } else {
+                        document.getElementById('product-details').innerHTML = 
+                            `<p>ID: ${data.id}</p>
+                            <p>Name: ${data.name}</p>
+                            <p>Description: ${data.description}</p>
+                            <p>Price: $${data.price}</p>
+                            <p>Stock: ${data.stock}</p>
+                            <p>Category: ${data.category}</p>`;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('product-details').innerHTML = 
+                        `<p>Error: ${error.message}</p>`;
+                });
+        }
+
+        function createProduct() {
+            const name = document.getElementById('name').value;
+            const description = document.getElementById('description').value;
+            const price = parseFloat(document.getElementById('price').value);
+            const stock = parseInt(document.getElementById('stock').value);
+            const category = document.getElementById('product-category').value;
+
+            fetch('/api/products/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: name,
+                    description: description,
+                    price: price,
+                    stock: stock,
+                    category: category,
+                    images: []
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('create-result').innerHTML = 
+                    `<p>Product created successfully! ID: ${data.id}</p>`;
+                // Clear form
+                document.getElementById('name').value = '';
+                document.getElementById('description').value = '';
+                document.getElementById('price').value = '';
+                document.getElementById('stock').value = '';
+                document.getElementById('product-category').value = '';
+                // Refresh product list
+                getProducts();
+            })
+            .catch(error => {
+                document.getElementById('create-result').innerHTML = 
+                    `<p>Error: ${error.message}</p>`;
+            });
+        }
+    </script>
+</body>
+</html> 

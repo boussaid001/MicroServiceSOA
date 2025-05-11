@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microservices Demo</title>
+</head>
+<body>
+    <h1>Go Microservices Demo</h1>
+    
+    <h2>Available Services:</h2>
+    <ul>
+        <li><a href="users.html">Users Service (REST)</a></li>
+        <li><a href="products.html">Products Service (gRPC)</a></li>
+        <li><a href="reviews.html">Reviews Service (GraphQL)</a></li>
+        <li><a href="orders.html">Orders Service (Kafka)</a></li>
+    </ul>
+
+    <div>
+        <h3>System Status</h3>
+        <button onclick="checkHealth()">Check Health</button>
+        <div id="health-status"></div>
+    </div>
+
+    <script>
+        function checkHealth() {
+            fetch('/health')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('health-status').innerHTML = 
+                        `<p>Status: ${data.status}</p>`;
+                })
+                .catch(error => {
+                    document.getElementById('health-status').innerHTML = 
+                        `<p>Error: ${error.message}</p>`;
+                });
+        }
+    </script>
+</body>
+</html>

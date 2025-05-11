@@ -1,0 +1,147 @@
+version: '3.8'
+
+services:
+  # API Gateway
+  api-gateway:
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - REST_SERVICE_URL=http://rest-service:8081
+      - GRPC_SERVICE_URL=grpc-service:8082
+      - GRAPHQL_SERVICE_URL=http://graphql-service:8083
+      - KAFKA_BROKERS=kafka:9092
+    depends_on:
+      - rest-service
+      - grpc-service
+      - graphql-service
+      - kafka-service
+
+  # REST User Service
+  rest-service:
+    build:
+      context: .
+      dockerfile: services/rest-service/Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      - DB_HOST=postgres-user
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=userdb
+    depends_on:
+      - postgres-user
+
+  # gRPC Product Service
+  grpc-service:
+    build:
+      context: .
+      dockerfile: services/grpc-service/Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      - DB_HOST=postgres-product
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=productdb
+    depends_on:
+      - postgres-product
+
+  # GraphQL Review Service
+  graphql-service:
+    build:
+      context: .
+      dockerfile: services/graphql-service/Dockerfile
+    ports:
+      - "8083:8083"
+    environment:
+      - DB_HOST=postgres-review
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=reviewdb
+    depends_on:
+      - postgres-review
+
+  # Kafka Order Service
+  kafka-service:
+    build:
+      context: .
+      dockerfile: services/kafka-service/Dockerfile
+    environment:
+      - KAFKA_BROKERS=kafka:9092
+      - DB_HOST=postgres-order
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=orderdb
+    depends_on:
+      - kafka
+      - postgres-order
+
+  # Databases - one per service
+  postgres-user:
+    image: postgres:14
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=userdb
+    volumes:
+      - user-data:/var/lib/postgresql/data
+
+  postgres-product:
+    image: postgres:14
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=productdb
+    volumes:
+      - product-data:/var/lib/postgresql/data
+
+  postgres-order:
+    image: postgres:14
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=orderdb
+    volumes:
+      - order-data:/var/lib/postgresql/data
+
+  postgres-review:
+    image: postgres:14
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=reviewdb
+    volumes:
+      - review-data:/var/lib/postgresql/data
+
+  # Kafka and Zookeeper for event streaming
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "32181:2181"
+
+  kafka:
+    image: wurstmeister/kafka
+    ports:
+      - "29092:9092"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENERS: PLAINTEXT://:9092,PLAINTEXT_HOST://:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CREATE_TOPICS: "orders:1:1"
+    depends_on:
+      - zookeeper
+
+volumes:
+  user-data:
+  product-data:
+  order-data:
+  review-data:
