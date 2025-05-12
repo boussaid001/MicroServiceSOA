@@ -14,15 +14,20 @@ func SetupRoutes(router *gin.Engine, cfg *config.Config) {
 	orderHandler := handlers.NewOrderHandler(cfg.KafkaBrokers)
 	// reviewHandler := handlers.NewReviewHandler(cfg.GraphqlServiceURL) // Keep for now, might be used for other review-related REST endpoints if any
 
-	// Create a specific proxy for the GraphQL service
-	graphqlProxyHandler := handlers.NewProxyHandler(cfg.GraphqlServiceURL) // cfg.GraphqlServiceURL should be like "http://graphql-service:8083"
+	// Create proxies for the GraphQL services
+	customGraphqlProxyHandler := handlers.NewProxyHandler(cfg.GraphqlServiceURL)
+	hasuraProxyHandler := handlers.NewProxyHandler(cfg.HasuraServiceURL)
 
 	// API group for versioning or other common path prefix (optional here for /graphql)
 	// Example: api := router.Group("/api")
 
-	// GraphQL specific route - not under /api prefix to match existing frontend calls
-	router.POST("/graphql", graphqlProxyHandler)
-	router.GET("/graphql", graphqlProxyHandler) // For GraphiQL access
+	// GraphQL routes
+	router.POST("/graphql", customGraphqlProxyHandler)
+	router.GET("/graphql", customGraphqlProxyHandler) // For GraphiQL access
+	
+	// Hasura GraphQL routes
+	router.POST("/hasura", hasuraProxyHandler)
+	router.GET("/hasura", hasuraProxyHandler) // For Hasura console/GraphiQL access
 
 	// Existing API group for RESTful services
 	api := router.Group("/api")

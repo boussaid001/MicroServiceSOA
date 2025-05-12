@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,10 +17,14 @@ func NewProxyHandler(targetBaseURL string) gin.HandlerFunc {
 		log.Fatalf("Invalid target base URL for proxy: %v", err) 
 	}
 
-	// Check if the target has a path. If not, we'll use the default.
-	if target.Path == "" {
-		target.Path = "/v1/graphql"
-		log.Printf("No path provided in target URL, defaulting to %s", target.Path)
+	// Store target path for endpoint-specific handling
+	targetPath := target.Path
+	
+	// For Hasura, we don't need to modify the target path as it's already included in the target URL
+	useTargetPath := strings.Contains(targetBaseURL, "hasura")
+	
+	if targetPath == "" && !useTargetPath {
+		log.Printf("No path provided in target URL, using default path")
 	}
 
 	proxy := httputil.NewSingleHostReverseProxy(&url.URL{
@@ -35,8 +40,11 @@ func NewProxyHandler(targetBaseURL string) gin.HandlerFunc {
 		// Store the original path for logging
 		originalPath := req.URL.Path
 		
-		// Always set the path to target.Path (which should be /v1/graphql)
-		req.URL.Path = target.Path
+		// For Hasura, use the complete path from the target URL
+		if useTargetPath {
+			req.URL.Path = targetPath
+		}
+		
 		req.Host = target.Host
 		
 		log.Printf("Proxying request from %s to -> %s", originalPath, req.URL.String())

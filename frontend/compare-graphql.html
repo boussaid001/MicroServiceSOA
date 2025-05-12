@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GraphQL Services Comparison</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f7f9fc;
+            color: #333;
+        }
+        .container {
+            width: 90%;
+            max-width: 1400px;
+            margin: 20px auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            flex: 1;
+            min-width: 45%;
+        }
+        .service-title {
+            margin-top: 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            color: #2c3e50;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        .error {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+        .success {
+            color: #2ecc71;
+            font-weight: 600;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-right: 5px;
+        }
+        .tab.active {
+            border-bottom-color: #3498db;
+            color: #3498db;
+            font-weight: 600;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h2 class="service-title">Custom GraphQL Service (Go)</h2>
+            <div class="tabs">
+                <div class="tab active" data-target="custom-query">Query Reviews</div>
+                <div class="tab" data-target="custom-create">Create Review</div>
+            </div>
+            
+            <div id="custom-query" class="tab-content active">
+                <div class="form-group">
+                    <label for="custom-product-id">Product ID</label>
+                    <input type="text" id="custom-product-id" placeholder="Enter Product ID">
+                </div>
+                <button id="custom-fetch-btn">Fetch Reviews</button>
+                <div id="custom-result" class="result"></div>
+            </div>
+            
+            <div id="custom-create" class="tab-content">
+                <div class="form-group">
+                    <label for="custom-new-product-id">Product ID</label>
+                    <input type="text" id="custom-new-product-id" placeholder="Enter Product ID">
+                </div>
+                <div class="form-group">
+                    <label for="custom-user-id">User ID</label>
+                    <input type="text" id="custom-user-id" placeholder="Enter User ID">
+                </div>
+                <div class="form-group">
+                    <label for="custom-username">Username</label>
+                    <input type="text" id="custom-username" placeholder="Enter Username">
+                </div>
+                <div class="form-group">
+                    <label for="custom-rating">Rating</label>
+                    <select id="custom-rating">
+                        <option value="1">1 Star</option>
+                        <option value="2">2 Stars</option>
+                        <option value="3">3 Stars</option>
+                        <option value="4">4 Stars</option>
+                        <option value="5" selected>5 Stars</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="custom-comment">Comment</label>
+                    <textarea id="custom-comment" rows="4" placeholder="Enter your review"></textarea>
+                </div>
+                <button id="custom-create-btn">Create Review</button>
+                <div id="custom-create-result" class="result"></div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2 class="service-title">Hasura GraphQL Service</h2>
+            <div class="tabs">
+                <div class="tab active" data-target="hasura-query">Query Reviews</div>
+                <div class="tab" data-target="hasura-create">Create Review</div>
+            </div>
+            
+            <div id="hasura-query" class="tab-content active">
+                <div class="form-group">
+                    <label for="hasura-product-id">Product ID</label>
+                    <input type="text" id="hasura-product-id" placeholder="Enter Product ID">
+                </div>
+                <button id="hasura-fetch-btn">Fetch Reviews</button>
+                <div id="hasura-result" class="result"></div>
+            </div>
+            
+            <div id="hasura-create" class="tab-content">
+                <div class="form-group">
+                    <label for="hasura-new-product-id">Product ID</label>
+                    <input type="text" id="hasura-new-product-id" placeholder="Enter Product ID">
+                </div>
+                <div class="form-group">
+                    <label for="hasura-user-id">User ID</label>
+                    <input type="text" id="hasura-user-id" placeholder="Enter User ID">
+                </div>
+                <div class="form-group">
+                    <label for="hasura-username">Username</label>
+                    <input type="text" id="hasura-username" placeholder="Enter Username">
+                </div>
+                <div class="form-group">
+                    <label for="hasura-rating">Rating</label>
+                    <select id="hasura-rating">
+                        <option value="1">1 Star</option>
+                        <option value="2">2 Stars</option>
+                        <option value="3">3 Stars</option>
+                        <option value="4">4 Stars</option>
+                        <option value="5" selected>5 Stars</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="hasura-comment">Comment</label>
+                    <textarea id="hasura-comment" rows="4" placeholder="Enter your review"></textarea>
+                </div>
+                <button id="hasura-create-btn">Create Review</button>
+                <div id="hasura-create-result" class="result"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Endpoints
+        const CUSTOM_GRAPHQL_ENDPOINT = 'http://localhost:8080/graphql';
+        const HASURA_GRAPHQL_ENDPOINT = 'http://localhost:8080/hasura';
+        
+        // Tab Functionality
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const parent = this.parentElement;
+                const targetId = this.getAttribute('data-target');
+                
+                // Update tabs
+                parent.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Update content
+                const card = parent.parentElement;
+                card.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                card.querySelector(`#${targetId}`).classList.add('active');
+            });
+        });
+        
+        // Custom GraphQL Service Functions
+        document.getElementById('custom-fetch-btn').addEventListener('click', async () => {
+            const productId = document.getElementById('custom-product-id').value;
+            const resultDiv = document.getElementById('custom-result');
+            
+            if (!productId) {
+                resultDiv.innerHTML = '<span class="error">Please enter a Product ID</span>';
+                return;
+            }
+            
+            try {
+                resultDiv.innerHTML = 'Loading...';
+                
+                const query = `
+                    query GetReviews($productId: ID!) {
+                        reviews(productId: $productId) {
+                            id
+                            productId
+                            userId
+                            username
+                            rating
+                            comment
+                            createdAt
+                        }
+                    }
+                `;
+                
+                const response = await fetch(CUSTOM_GRAPHQL_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query,
+                        variables: { productId }
+                    }),
+                });
+                
+                const data = await response.json();
+                resultDiv.innerHTML = '<span class="success">✓ Success</span>\n' + JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.innerHTML = '<span class="error">Error:</span> ' + error.message;
+            }
+        });
+        
+        document.getElementById('custom-create-btn').addEventListener('click', async () => {
+            const productId = document.getElementById('custom-new-product-id').value;
+            const userId = document.getElementById('custom-user-id').value;
+            const username = document.getElementById('custom-username').value;
+            const rating = parseInt(document.getElementById('custom-rating').value);
+            const comment = document.getElementById('custom-comment').value;
+            const resultDiv = document.getElementById('custom-create-result');
+            
+            if (!productId || !userId || !username || !comment) {
+                resultDiv.innerHTML = '<span class="error">Please fill all required fields</span>';
+                return;
+            }
+            
+            try {
+                resultDiv.innerHTML = 'Creating review...';
+                
+                const mutation = `
+                    mutation CreateReview($input: CreateReviewInput!) {
+                        createReview(input: $input) {
+                            id
+                            productId
+                            userId
+                            username
+                            rating
+                            comment
+                            createdAt
+                        }
+                    }
+                `;
+                
+                const response = await fetch(CUSTOM_GRAPHQL_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: mutation,
+                        variables: {
+                            input: {
+                                productId,
+                                userId,
+                                username,
+                                rating,
+                                comment
+                            }
+                        }
+                    }),
+                });
+                
+                const data = await response.json();
+                resultDiv.innerHTML = '<span class="success">✓ Review Created</span>\n' + JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.innerHTML = '<span class="error">Error:</span> ' + error.message;
+            }
+        });
+        
+        // Hasura GraphQL Service Functions
+        document.getElementById('hasura-fetch-btn').addEventListener('click', async () => {
+            const productId = document.getElementById('hasura-product-id').value;
+            const resultDiv = document.getElementById('hasura-result');
+            
+            if (!productId) {
+                resultDiv.innerHTML = '<span class="error">Please enter a Product ID</span>';
+                return;
+            }
+            
+            try {
+                resultDiv.innerHTML = 'Loading...';
+                
+                const query = `
+                    query GetReviews($product_id: String!) {
+                        reviews(where: {product_id: {_eq: $product_id}}) {
+                            id
+                            product_id
+                            user_id
+                            username
+                            rating
+                            comment
+                            created_at
+                        }
+                    }
+                `;
+                
+                const response = await fetch(HASURA_GRAPHQL_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query,
+                        variables: { product_id: productId }
+                    }),
+                });
+                
+                const data = await response.json();
+                resultDiv.innerHTML = '<span class="success">✓ Success</span>\n' + JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.innerHTML = '<span class="error">Error:</span> ' + error.message;
+            }
+        });
+        
+        document.getElementById('hasura-create-btn').addEventListener('click', async () => {
+            const productId = document.getElementById('hasura-new-product-id').value;
+            const userId = document.getElementById('hasura-user-id').value;
+            const username = document.getElementById('hasura-username').value;
+            const rating = parseInt(document.getElementById('hasura-rating').value);
+            const comment = document.getElementById('hasura-comment').value;
+            const resultDiv = document.getElementById('hasura-create-result');
+            
+            if (!productId || !userId || !username || !comment) {
+                resultDiv.innerHTML = '<span class="error">Please fill all required fields</span>';
+                return;
+            }
+            
+            try {
+                resultDiv.innerHTML = 'Creating review...';
+                
+                const mutation = `
+                    mutation CreateReview($product_id: String!, $user_id: String!, $username: String!, $rating: Int!, $comment: String!) {
+                        insert_reviews_one(object: {
+                            product_id: $product_id, 
+                            user_id: $user_id, 
+                            username: $username, 
+                            rating: $rating, 
+                            comment: $comment
+                        }) {
+                            id
+                            product_id
+                            user_id
+                            username
+                            rating
+                            comment
+                            created_at
+                        }
+                    }
+                `;
+                
+                const response = await fetch(HASURA_GRAPHQL_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: mutation,
+                        variables: {
+                            product_id: productId,
+                            user_id: userId,
+                            username,
+                            rating,
+                            comment
+                        }
+                    }),
+                });
+                
+                const data = await response.json();
+                resultDiv.innerHTML = '<span class="success">✓ Review Created</span>\n' + JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.innerHTML = '<span class="error">Error:</span> ' + error.message;
+            }
+        });
+    </script>
+</body>
+</html> 
