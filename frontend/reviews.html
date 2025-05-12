@@ -3,36 +3,214 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reviews Service - GraphQL</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Reviews Service - Hasura GraphQL</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #45a049;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        button:active {
+            transform: translateY(1px);
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0 15px 0;
+            display: block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        input:focus, textarea:focus {
+            border-color: #4CAF50;
+            outline: none;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+        }
+        .review-item {
+            background-color: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #4CAF50;
+        }
+        .error {
+            color: #D32F2F;
+            font-weight: bold;
+            background-color: #FFEBEE;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #D32F2F;
+        }
+        .success {
+            color: #388E3C;
+            font-weight: bold;
+            background-color: #E8F5E9;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #388E3C;
+        }
+        .debug {
+            font-family: monospace;
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            margin-top: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        .rating {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .status-display {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .config-panel {
+            background-color: #E3F2FD;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            border: 1px solid #BBDEFB;
+        }
+        .toggle-btn {
+            background-color: #2196F3;
+            margin-right: 10px;
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .hidden {
+            display: none !important;
+        }
+        nav {
+            margin-bottom: 20px;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        nav a {
+            margin-right: 15px;
+            color: #2196F3;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+        #connection-status {
+            display: inline-block;
+            padding: 5px 10px;
+            margin-left: 10px;
+            border-radius: 4px;
+        }
+        .highlight {
+            background-color: yellow;
+            padding: 2px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Reviews Service (GraphQL)</h1>
+    <h1>Reviews Service (Hasura GraphQL)</h1>
     
     <nav>
         <a href="index.html">Home</a>
     </nav>
     
-    <div>
-        <h2>Get Reviews for Product</h2>
+    <div class="config-panel">
+        <h3>GraphQL Connection Settings</h3>
+        <p><strong>Note:</strong> Direct connection to Hasura is used. API Gateway proxy is currently disabled.</p>
         <div>
-            <label for="product-id-search">Product ID:</label>
-            <input type="text" id="product-id-search" name="product-id-search">
-            <button onclick="getReviewsForProduct()">Get Reviews</button>
+            <input type="radio" id="direct-hasura" name="api-endpoint" value="hasura" checked disabled>
+            <label for="direct-hasura">Direct to Hasura (http://localhost:8090/v1/graphql) - <span class="highlight">Active</span></label>
         </div>
-        <div id="reviews-list"></div>
+        <div id="admin-secret-container">
+            <label for="admin-secret">Hasura Admin Secret:</label>
+            <input type="password" id="admin-secret" value="myadminsecretkey">
+        </div>
+        <button id="test-connection" class="toggle-btn">Test Connection</button>
+        <span id="connection-status"></span>
     </div>
 
-    <div>
+    <section id="all-reviews-section">
+        <h2>All Reviews</h2>
+        <button id="load-all-reviews">
+            <span class="loading-spinner hidden" id="reviews-spinner"></span>
+            Load/Refresh All Reviews
+        </button>
+        <div id="reviews-loading" class="status-display hidden">Loading reviews...</div>
+        <div id="reviews-error" class="status-display error hidden"></div>
+        <div id="reviews-list"></div>
+        <div id="reviews-debug" class="debug hidden"></div>
+    </section>
+
+    <section>
         <h2>Get Review by ID</h2>
         <div>
-            <label for="review-id">Review ID:</label>
+            <label for="review-id">Review ID (UUID):</label>
             <input type="text" id="review-id" name="review-id">
-            <button onclick="getReviewById()">Get Review</button>
+            <button id="get-review-btn">
+                <span class="loading-spinner hidden" id="get-review-spinner"></span>
+                Get Review
+            </button>
+            <div id="review-details-loading" class="status-display hidden">Loading review...</div>
+            <div id="review-details-error" class="status-display error hidden"></div>
+            <div id="review-details"></div>
+            <div id="review-details-debug" class="debug hidden"></div>
         </div>
-        <div id="review-details"></div>
-    </div>
+    </section>
 
-    <div>
+    <section>
         <h2>Create New Review</h2>
         <form id="create-review-form">
             <div>
@@ -44,119 +222,509 @@
                 <input type="text" id="user-id" name="user-id" required>
             </div>
             <div>
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div>
                 <label for="rating">Rating (1-5):</label>
-                <input type="number" id="rating" name="rating" min="1" max="5" required>
+                <input type="number" id="rating" name="rating" min="1" max="5" step="0.1" required>
             </div>
             <div>
                 <label for="comment">Comment:</label>
-                <textarea id="comment" name="comment" required></textarea>
+                <textarea id="comment" name="comment"></textarea>
             </div>
-            <button type="button" onclick="createReview()">Create Review</button>
+            <button type="button" id="create-review-btn">
+                <span class="loading-spinner hidden" id="create-spinner"></span>
+                Create Review
+            </button>
         </form>
-        <div id="create-result"></div>
-    </div>
+        <div id="create-loading" class="status-display hidden">Creating review...</div>
+        <div id="create-result-error" class="status-display error hidden"></div>
+        <div id="create-result" class="success hidden"></div>
+        <div id="create-debug" class="debug hidden"></div>
+    </section>
 
     <script>
-        function getReviewsForProduct() {
-            const productId = document.getElementById('product-id-search').value;
-            if (!productId) {
-                document.getElementById('reviews-list').innerHTML = 
-                    '<p>Please enter a product ID</p>';
-                return;
+        // Debug mode - set to false in production
+        const DEBUG = true;
+        
+        // API endpoints
+        const GATEWAY_ENDPOINT = '/graphql';
+        const HASURA_DIRECT_ENDPOINT = 'http://localhost:8090/v1/graphql';
+        
+        // Selected endpoint (default to hasura)
+        let selectedEndpoint = 'hasura';
+        let connectionTested = false;
+        
+        // Elements references to avoid repeated DOM lookups
+        const elements = {
+            connectionStatus: document.getElementById('connection-status'),
+            reviewsList: document.getElementById('reviews-list'),
+            reviewsError: document.getElementById('reviews-error'),
+            reviewsLoading: document.getElementById('reviews-loading'),
+            reviewsDebug: document.getElementById('reviews-debug'),
+            reviewsSpinner: document.getElementById('reviews-spinner'),
+            
+            reviewId: document.getElementById('review-id'),
+            reviewDetails: document.getElementById('review-details'),
+            reviewDetailsError: document.getElementById('review-details-error'),
+            reviewDetailsLoading: document.getElementById('review-details-loading'),
+            reviewDetailsDebug: document.getElementById('review-details-debug'),
+            getReviewSpinner: document.getElementById('get-review-spinner'),
+            
+            productId: document.getElementById('product-id'),
+            userId: document.getElementById('user-id'),
+            username: document.getElementById('username'),
+            rating: document.getElementById('rating'),
+            comment: document.getElementById('comment'),
+            createResult: document.getElementById('create-result'),
+            createResultError: document.getElementById('create-result-error'),
+            createLoading: document.getElementById('create-loading'),
+            createDebug: document.getElementById('create-debug'),
+            createSpinner: document.getElementById('create-spinner'),
+            createReviewForm: document.getElementById('create-review-form'),
+            
+            adminSecret: document.getElementById('admin-secret'),
+            adminSecretContainer: document.getElementById('admin-secret-container')
+        };
+        
+        // Helper function to get the current GraphQL endpoint
+        function getCurrentEndpoint() {
+            return selectedEndpoint === 'gateway' ? GATEWAY_ENDPOINT : HASURA_DIRECT_ENDPOINT;
+        }
+        
+        // Helper function to show/hide elements and set text content
+        function updateUI(element, content, isVisible = true, className = null) {
+            if (!element) return;
+            
+            if (content !== undefined && content !== null) {
+                element.textContent = content;
             }
-
-            fetch(`/api/reviews/product/${productId}`)
-                .then(response => response.json())
-                .then(data => {
-                    const reviewsList = document.getElementById('reviews-list');
-                    if (data.data && data.data.reviews && data.data.reviews.length > 0) {
-                        let html = '<ul>';
-                        data.data.reviews.forEach(review => {
-                            html += `<li>ID: ${review.id}, Rating: ${review.rating}, Comment: ${review.comment}</li>`;
-                        });
-                        html += '</ul>';
-                        reviewsList.innerHTML = html;
-                    } else if (data.errors) {
-                        reviewsList.innerHTML = `<p>Error: ${data.errors[0].message}</p>`;
-                    } else {
-                        reviewsList.innerHTML = '<p>No reviews found</p>';
-                    }
-                })
-                .catch(error => {
-                    document.getElementById('reviews-list').innerHTML = `<p>Error: ${error.message}</p>`;
-                });
+            
+            element.classList.toggle('hidden', !isVisible);
+            
+            if (className) {
+                element.className = className;
+            }
         }
 
-        function getReviewById() {
-            const reviewId = document.getElementById('review-id').value;
-            if (!reviewId) {
-                document.getElementById('review-details').innerHTML = 
-                    '<p>Please enter a review ID</p>';
-                return;
-            }
-
-            fetch(`/api/reviews/${reviewId}`)
-                .then(response => response.json())
-                .then(data => {
-                    const reviewDetails = document.getElementById('review-details');
-                    if (data.data && data.data.review) {
-                        const review = data.data.review;
-                        reviewDetails.innerHTML = 
-                            `<p>ID: ${review.id}</p>
-                            <p>Product ID: ${review.productId}</p>
-                            <p>User ID: ${review.userId}</p>
-                            <p>Rating: ${review.rating}</p>
-                            <p>Comment: ${review.comment}</p>
-                            <p>Created: ${review.createdAt}</p>`;
-                    } else if (data.errors) {
-                        reviewDetails.innerHTML = `<p>Error: ${data.errors[0].message}</p>`;
-                    } else {
-                        reviewDetails.innerHTML = '<p>Review not found</p>';
-                    }
-                })
-                .catch(error => {
-                    document.getElementById('review-details').innerHTML = `<p>Error: ${error.message}</p>`;
-                });
+        // Helper function to toggle spinner
+        function toggleSpinner(spinnerElement, isLoading) {
+            if (!spinnerElement) return;
+            spinnerElement.classList.toggle('hidden', !isLoading);
         }
 
-        function createReview() {
-            const productId = document.getElementById('product-id').value;
-            const userId = document.getElementById('user-id').value;
-            const rating = parseInt(document.getElementById('rating').value);
-            const comment = document.getElementById('comment').value;
+        // Helper function to show debug information
+        function setDebugInfo(debugElement, data) {
+            if (!DEBUG || !debugElement) return;
+            
+            debugElement.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+            debugElement.classList.remove('hidden');
+        }
 
-            fetch('/api/reviews/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    productId: productId,
-                    userId: userId,
-                    rating: rating,
-                    comment: comment
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.data && data.data.createReview) {
-                    document.getElementById('create-result').innerHTML = 
-                        `<p>Review created successfully! ID: ${data.data.createReview.id}</p>`;
-                    // Clear form
-                    document.getElementById('product-id').value = '';
-                    document.getElementById('user-id').value = '';
-                    document.getElementById('rating').value = '';
-                    document.getElementById('comment').value = '';
-                } else if (data.errors) {
-                    document.getElementById('create-result').innerHTML = 
-                        `<p>Error: ${data.errors[0].message}</p>`;
+        // Helper function to display a star rating
+        function getStarRating(rating) {
+            const fullStars = Math.floor(rating);
+            const halfStar = rating % 1 >= 0.5 ? 1 : 0;
+            let stars = '';
+            
+            for (let i = 0; i < fullStars; i++) {
+                stars += '★';
+            }
+            
+            if (halfStar) {
+                stars += '½';
+            }
+            
+            const emptyStars = 5 - fullStars - halfStar;
+            for (let i = 0; i < emptyStars; i++) {
+                stars += '☆';
+            }
+            
+            return `${stars} (${rating})`;
+        }
+
+        // Test connection to GraphQL endpoint
+        async function testConnection() {
+            const endpoint = getCurrentEndpoint();
+            updateUI(elements.connectionStatus, 'Testing connection...', true);
+            elements.connectionStatus.style.color = 'blue';
+            elements.connectionStatus.style.backgroundColor = '#E3F2FD';
+            
+            const headers = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            };
+            
+            if (selectedEndpoint === 'hasura') {
+                const adminSecret = elements.adminSecret.value;
+                if (adminSecret) {
+                    headers['X-Hasura-Admin-Secret'] = adminSecret;
                 }
-            })
-            .catch(error => {
-                document.getElementById('create-result').innerHTML = 
-                    `<p>Error: ${error.message}</p>`;
-            });
+            }
+            
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({
+                        query: 'query { __typename }'
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                if (data.errors) {
+                    throw new Error(data.errors.map(e => e.message).join(', '));
+                }
+                
+                updateUI(elements.connectionStatus, 'Connection successful! ✅', true);
+                elements.connectionStatus.style.color = 'green';
+                elements.connectionStatus.style.backgroundColor = '#E8F5E9';
+                connectionTested = true;
+                return true;
+            } catch (error) {
+                updateUI(elements.connectionStatus, `Connection failed: ${error.message} ❌`, true);
+                elements.connectionStatus.style.color = 'red';
+                elements.connectionStatus.style.backgroundColor = '#FFEBEE';
+                console.error('Connection test error:', error);
+                return false;
+            }
         }
+
+        // GraphQL fetch function with robust error handling
+        async function gqlFetch(query, variables = {}, retries = 1) {
+            const endpoint = getCurrentEndpoint();
+            const headers = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            };
+            
+            // Only include admin secret when using direct Hasura connection
+            if (selectedEndpoint === 'hasura') {
+                const adminSecret = elements.adminSecret.value;
+                if (adminSecret) {
+                    headers['X-Hasura-Admin-Secret'] = adminSecret;
+                }
+            }
+            
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({ query, variables })
+                });
+                
+                if (!response.ok) {
+                    console.error('HTTP error:', response.status, response.statusText);
+                    throw new Error(`HTTP error! Status: ${response.status} ${response.statusText}`);
+                }
+                
+                const json = await response.json();
+                
+                if (DEBUG) {
+                    console.log('GraphQL Response:', json);
+                }
+
+                if (json.errors && json.errors.length > 0) {
+                    // If we get a permission error and still have retries, try testing connection first
+                    const hasPermissionError = json.errors.some(e => 
+                        e.message.includes('permission denied') || 
+                        e.message.includes('not authorized'));
+                        
+                    if (hasPermissionError && retries > 0) {
+                        console.log('Permission error detected, retesting connection...');
+                        await testConnection();
+                        return gqlFetch(query, variables, retries - 1);
+                    }
+                }
+                
+                return json;
+            } catch (error) {
+                console.error("GraphQL fetch error:", error);
+                // If we have retries left and it's a network error, test connection and retry
+                if (retries > 0 && (error.message.includes('Failed to fetch') || 
+                    error.message.includes('NetworkError'))) {
+                    console.log('Network error detected, retesting connection...');
+                    await testConnection();
+                    return gqlFetch(query, variables, retries - 1);
+                }
+                throw error;
+            }
+        }
+
+        // Load all reviews function
+        async function loadAllReviews() {
+            updateUI(elements.reviewsError, '', false);
+            updateUI(elements.reviewsList, '', true);
+            toggleSpinner(elements.reviewsSpinner, true);
+            
+            // Check connection if not tested
+            if (!connectionTested) {
+                const connected = await testConnection();
+                if (!connected) {
+                    updateUI(elements.reviewsError, 'Failed to connect to GraphQL endpoint. Please check connection settings.', true);
+                    toggleSpinner(elements.reviewsSpinner, false);
+                return;
+                }
+            }
+            
+            // Hasura query for all reviews, ordered by creation time descending
+            const query = `
+                query GetAllReviews {
+                    reviews(order_by: {created_at: desc}) {
+                        id
+                        product_id
+                        user_id
+                        username
+                        rating
+                        comment
+                        created_at
+                    }
+                }
+            `;
+            
+            try {
+                const result = await gqlFetch(query);
+                setDebugInfo(elements.reviewsDebug, result);
+                
+                if (result.errors) {
+                    const errorMsg = result.errors.map(e => e.message).join('\n');
+                    throw new Error(errorMsg);
+                }
+                
+                if (result.data && result.data.reviews && result.data.reviews.length > 0) {
+                    let html = '';
+                    result.data.reviews.forEach(review => {
+                        html += `
+                            <div class="review-item">
+                                <p><strong>Product ID:</strong> ${review.product_id}</p>
+                                <p><strong>User:</strong> ${review.username} (ID: ${review.user_id})</p>
+                                <p><strong>Rating:</strong> <span class="rating">${getStarRating(review.rating)}</span></p>
+                                <p><strong>Comment:</strong> ${review.comment || 'No comment provided'}</p>
+                                <p><strong>Date:</strong> ${new Date(review.created_at).toLocaleString()}</p>
+                                <p><em>Review ID: ${review.id}</em></p>
+                            </div>
+                        `;
+                    });
+                    elements.reviewsList.innerHTML = html;
+                } else {
+                    elements.reviewsList.innerHTML = '<p>No reviews found in the database.</p>';
+                }
+                updateUI(elements.reviewsError, '', false);
+            } catch (error) {
+                console.error('Error loading reviews:', error);
+                updateUI(elements.reviewsError, `Error loading reviews: ${error.message}`, true);
+                elements.reviewsList.innerHTML = '';
+            } finally {
+                toggleSpinner(elements.reviewsSpinner, false);
+            }
+        }
+
+        // Get review by ID function
+        async function getReviewById() {
+            const reviewId = elements.reviewId.value.trim();
+            
+            updateUI(elements.reviewDetailsError, '', false);
+            updateUI(elements.reviewDetails, '', true);
+            toggleSpinner(elements.getReviewSpinner, true);
+            
+            if (!reviewId) {
+                updateUI(elements.reviewDetailsError, 'Please enter a Review ID (UUID).', true);
+                toggleSpinner(elements.getReviewSpinner, false);
+                return;
+            }
+
+            // Check connection if not tested
+            if (!connectionTested) {
+                const connected = await testConnection();
+                if (!connected) {
+                    updateUI(elements.reviewDetailsError, 'Failed to connect to GraphQL endpoint. Please check connection settings.', true);
+                    toggleSpinner(elements.getReviewSpinner, false);
+                    return;
+                }
+            }
+            
+            // Hasura query for review by primary key (id)
+            const query = `
+                query GetReview($id: String!) {
+                    reviews_by_pk(id: $id) {
+                        id
+                        product_id
+                        user_id
+                        username
+                        rating
+                        comment
+                        created_at
+                    }
+                }
+            `;
+            
+            try {
+                const result = await gqlFetch(query, { id: reviewId });
+                setDebugInfo(elements.reviewDetailsDebug, result);
+                
+                if (result.errors) {
+                    const errorMsg = result.errors.map(e => e.message).join('\n');
+                    throw new Error(errorMsg);
+                }
+                
+                if (result.data && result.data.reviews_by_pk) {
+                    const review = result.data.reviews_by_pk;
+                    const html = `
+                        <div class="review-item">
+                            <p><strong>Product ID:</strong> ${review.product_id}</p>
+                            <p><strong>User:</strong> ${review.username} (ID: ${review.user_id})</p>
+                            <p><strong>Rating:</strong> <span class="rating">${getStarRating(review.rating)}</span></p>
+                            <p><strong>Comment:</strong> ${review.comment || 'No comment provided'}</p>
+                            <p><strong>Date:</strong> ${new Date(review.created_at).toLocaleString()}</p>
+                            <p><em>Review ID: ${review.id}</em></p>
+                        </div>
+                    `;
+                    elements.reviewDetails.innerHTML = html;
+                    } else {
+                    updateUI(elements.reviewDetails, 'Review not found with the given ID.', true);
+                }
+                updateUI(elements.reviewDetailsError, '', false);
+            } catch (error) {
+                console.error('Error fetching review by ID:', error);
+                updateUI(elements.reviewDetailsError, `Error fetching review: ${error.message}`, true);
+                elements.reviewDetails.innerHTML = '';
+            } finally {
+                toggleSpinner(elements.getReviewSpinner, false);
+            }
+        }
+
+        // Create review function
+        async function createReview() {
+            const productId = elements.productId.value.trim();
+            const userId = elements.userId.value.trim();
+            const username = elements.username.value.trim();
+            const rating = parseFloat(elements.rating.value);
+            const comment = elements.comment.value.trim() || null;
+            
+            updateUI(elements.createResult, '', false);
+            updateUI(elements.createResultError, '', false);
+            toggleSpinner(elements.createSpinner, true);
+            
+            if (!productId || !userId || !username || isNaN(rating)) {
+                updateUI(elements.createResultError, 'Product ID, User ID, Username, and a valid Rating are required.', true);
+                toggleSpinner(elements.createSpinner, false);
+                return;
+            }
+            
+            if (rating < 0.5 || rating > 5) {
+                updateUI(elements.createResultError, 'Rating must be between 0.5 and 5.', true);
+                toggleSpinner(elements.createSpinner, false);
+                return;
+            }
+            
+            // Check connection if not tested
+            if (!connectionTested) {
+                const connected = await testConnection();
+                if (!connected) {
+                    updateUI(elements.createResultError, 'Failed to connect to GraphQL endpoint. Please check connection settings.', true);
+                    toggleSpinner(elements.createSpinner, false);
+                    return;
+                }
+            }
+            
+            // Hasura insert mutation
+            const mutation = `
+                mutation CreateNewReview($object: reviews_insert_input!) {
+                    insert_reviews_one(object: $object) {
+                        id
+                        product_id
+                        user_id
+                        username
+                        rating
+                        comment
+                        created_at
+                    }
+                }
+            `;
+
+            const reviewObject = {
+                product_id: productId,
+                user_id: userId,
+                username: username,
+                rating: rating,
+                comment: comment
+            };
+            
+            try {
+                const result = await gqlFetch(mutation, { object: reviewObject });
+                setDebugInfo(elements.createDebug, result);
+                
+                if (result.errors) {
+                    const errorMsg = result.errors.map(e => e.message).join('\n');
+                    throw new Error(errorMsg);
+                }
+                
+                if (result.data && result.data.insert_reviews_one) {
+                    const reviewId = result.data.insert_reviews_one.id;
+                    updateUI(elements.createResult, `Review created successfully! ID: ${reviewId}`, true);
+                    elements.createReviewForm.reset();
+                    
+                    // Refresh the reviews list to show the new review
+                    loadAllReviews();
+                } else {
+                    throw new Error('Unknown error occurred. No data returned.');
+                }
+            } catch (error) {
+                console.error('Error creating review:', error);
+                updateUI(elements.createResultError, `Error creating review: ${error.message}`, true);
+            } finally {
+                toggleSpinner(elements.createSpinner, false);
+            }
+        }
+
+        // Update endpoint selection visibility
+        function updateEndpointSelection() {
+            selectedEndpoint = 'hasura';
+            
+            // Always show admin secret for direct Hasura connection
+            elements.adminSecretContainer.classList.toggle('hidden', false);
+            
+            // Reset connection status when changing endpoint
+            connectionTested = false;
+            updateUI(elements.connectionStatus, '', false);
+        }
+
+        // Add event listeners when the DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initial state
+            updateEndpointSelection();
+            
+            // Event listeners for endpoint selection
+            document.getElementById('test-connection').addEventListener('click', testConnection);
+            
+            // Connect button click events to functions
+            document.getElementById('load-all-reviews').addEventListener('click', loadAllReviews);
+            document.getElementById('get-review-btn').addEventListener('click', getReviewById);
+            document.getElementById('create-review-btn').addEventListener('click', createReview);
+            
+            // Show debug sections if debug mode is enabled
+            if (DEBUG) {
+                document.querySelectorAll('.debug').forEach(el => {
+                    el.classList.remove('hidden');
+                });
+            }
+            
+            // Ensure we start with Direct to Hasura connection
+            document.getElementById('direct-hasura').checked = true;
+            updateEndpointSelection();
+            
+            // Initial connection test and data load
+            testConnection().then(success => {
+                if (success) {
+                    loadAllReviews();
+                }
+            });
+        });
     </script>
 </body>
 </html> 

@@ -37,7 +37,14 @@ func main() {
 
 	// Serve static files for frontend - place this after the API routes to avoid conflicts
 	router.Static("/static", "./frontend/static")
-	router.StaticFile("/", "./frontend/index.html")
+	
+	// Redirect root to dashboard instead of serving index.html directly
+	router.GET("/", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/dashboard")
+	})
+	
+	// Serve all the static HTML files
+	router.StaticFile("/dashboard", "./frontend/index.html")
 	router.StaticFile("/users.html", "./frontend/users.html")
 	router.StaticFile("/products.html", "./frontend/products.html")
 	router.StaticFile("/reviews.html", "./frontend/reviews.html")

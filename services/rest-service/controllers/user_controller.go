@@ -93,18 +93,16 @@ func (c *UserController) CreateUser(ctx *gin.Context) {
 		return
 	}
 
-	// Convert to response object to hide sensitive data
-	response := models.UserResponse{
-		ID:        user.ID,
-		Username:  user.Username,
-		Email:     user.Email,
-		FirstName: user.FirstName,
-		LastName:  user.LastName,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-	}
-
-	ctx.JSON(http.StatusCreated, response)
+	// Instead of returning the UserResponse directly, return a map with explicit id field
+	ctx.JSON(http.StatusCreated, gin.H{
+		"id":        user.ID,
+		"username":  user.Username,
+		"email":     user.Email,
+		"firstName": user.FirstName,
+		"lastName":  user.LastName,
+		"createdAt": user.CreatedAt,
+		"updatedAt": user.UpdatedAt,
+	})
 }
 
 // UpdateUser updates an existing user

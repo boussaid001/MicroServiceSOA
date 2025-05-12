@@ -12,9 +12,19 @@ func SetupRoutes(router *gin.Engine, cfg *config.Config) {
 	userHandler := handlers.NewUserHandler(cfg.RestServiceURL)
 	productHandler := handlers.NewProductHandler(cfg.GrpcServiceURL)
 	orderHandler := handlers.NewOrderHandler(cfg.KafkaBrokers)
-	reviewHandler := handlers.NewReviewHandler(cfg.GraphqlServiceURL)
+	// reviewHandler := handlers.NewReviewHandler(cfg.GraphqlServiceURL) // Keep for now, might be used for other review-related REST endpoints if any
 
-	// API group
+	// Create a specific proxy for the GraphQL service
+	graphqlProxyHandler := handlers.NewProxyHandler(cfg.GraphqlServiceURL) // cfg.GraphqlServiceURL should be like "http://graphql-service:8083"
+
+	// API group for versioning or other common path prefix (optional here for /graphql)
+	// Example: api := router.Group("/api")
+
+	// GraphQL specific route - not under /api prefix to match existing frontend calls
+	router.POST("/graphql", graphqlProxyHandler)
+	router.GET("/graphql", graphqlProxyHandler) // For GraphiQL access
+
+	// Existing API group for RESTful services
 	api := router.Group("/api")
 	{
 		// User routes (REST)
@@ -47,13 +57,13 @@ func SetupRoutes(router *gin.Engine, cfg *config.Config) {
 			orders.GET("/status/:id", orderHandler.GetOrderStatus)
 		}
 
-		// Review routes (GraphQL)
-		reviews := api.Group("/reviews")
-		{
-			reviews.GET("/product/:productId", reviewHandler.GetProductReviews)
-			reviews.GET("/:id", reviewHandler.GetReview)
-			reviews.POST("/", reviewHandler.CreateReview)
-		}
+		// Commenting out old /api/reviews if they are fully replaced by /graphql
+		// reviews := api.Group("/reviews")
+		// {
+		// 	reviews.GET("/product/:productId", reviewHandler.GetProductReviews)
+		// 	reviews.GET("/:id", reviewHandler.GetReview)
+		// 	reviews.POST("/", reviewHandler.CreateReview)
+		// }
 	}
 
 	// Health check

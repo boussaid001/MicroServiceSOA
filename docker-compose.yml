@@ -11,12 +11,12 @@ services:
     environment:
       - REST_SERVICE_URL=http://rest-service:8081
       - GRPC_SERVICE_URL=grpc-service:8082
-      - GRAPHQL_SERVICE_URL=http://graphql-service:8083
+      - GRAPHQL_SERVICE_URL=http://hasura:8080/v1/graphql
       - KAFKA_BROKERS=kafka:9092
     depends_on:
       - rest-service
       - grpc-service
-      - graphql-service
+      - hasura
       - kafka-service
 
   # REST User Service
@@ -51,21 +51,35 @@ services:
     depends_on:
       - postgres-product
 
-  # GraphQL Review Service
-  graphql-service:
-    build:
-      context: .
-      dockerfile: services/graphql-service/Dockerfile
+  # GraphQL Review Service (REPLACED BY HASURA)
+  # graphql-service:
+  #   build:
+  #     context: .
+  #     dockerfile: services/graphql-service/Dockerfile
+  #   ports:
+  #     - "8083:8083"
+  #   environment:
+  #     - DB_HOST=postgres-review
+  #     - DB_PORT=5432
+  #     - DB_USER=postgres
+  #     - DB_PASSWORD=postgres
+  #     - DB_NAME=reviewdb
+  #   depends_on:
+  #     - postgres-review
+
+  hasura:
+    image: hasura/graphql-engine:v2.35.0
     ports:
-      - "8083:8083"
+      - "8090:8080"
     environment:
-      - DB_HOST=postgres-review
-      - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
-      - DB_NAME=reviewdb
+      HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:postgres@postgres-review:5432/reviewdb
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
+      HASURA_GRAPHQL_DEV_MODE: "true"
+      HASURA_GRAPHQL_ADMIN_SECRET: "myadminsecretkey"
+      HASURA_GRAPHQL_UNAUTHORIZED_ROLE: "public"
     depends_on:
       - postgres-review
+    restart: always
 
   # Kafka Order Service
   kafka-service:

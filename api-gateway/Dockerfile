@@ -12,13 +12,13 @@ COPY ./api-gateway /app/api-gateway
 WORKDIR /app/api-gateway
 
 # Initialize and set up Go module with dependencies
-RUN go mod init github.com/yourusername/go-microservices-project/api-gateway
+RUN go mod init github.com/boussaid001/go-microservices-project/api-gateway
 RUN go mod edit -require=golang.org/x/crypto@v0.16.0
 RUN go mod edit -require=github.com/IBM/sarama@v1.42.1
 RUN go mod edit -require=google.golang.org/grpc@v1.58.3
 RUN go mod edit -require=github.com/gin-gonic/gin@v1.9.1
 RUN go mod edit -require=github.com/rogpeppe/go-internal@v1.11.0
-RUN go mod edit -replace=github.com/yourusername/go-microservices-project/proto/product=../proto/product
+RUN go mod edit -replace=github.com/boussaid001/go-microservices-project/proto/product=../proto/product
 
 # Build the application
 RUN go mod tidy
