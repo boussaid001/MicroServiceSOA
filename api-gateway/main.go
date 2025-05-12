@@ -11,8 +11,8 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/yourusername/go-microservices-project/api-gateway/config"
-	"github.com/yourusername/go-microservices-project/api-gateway/routes"
+	"github.com/boussaid001/go-microservices-project/api-gateway/config"
+	"github.com/boussaid001/go-microservices-project/api-gateway/routes"
 )
 
 func main() {

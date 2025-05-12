@@ -1,0 +1,953 @@
+{
+  "info": {
+    "_postman_id": "7d1e3b4c-5a2f-6c8d-9e0f-1a2b3c4d5e6f",
+    "name": "Go Microservices Complete API Collection",
+    "description": "A comprehensive collection for testing all API types in the Go microservices project. Includes API Gateway, gRPC, REST, GraphQL, and Kafka endpoints with detailed test scripts and documentation.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1 - API Gateway",
+      "description": "Tests for the API Gateway service which routes requests to appropriate microservices",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Check if the API Gateway is healthy and responsive"
+          },
+          "response": []
+        },
+        {
+          "name": "Gateway Routes Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/routes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "routes"]
+            },
+            "description": "Get information about configured API routes (if implemented)"
+          },
+          "response": []
+        },
+        {
+          "name": "Gateway Version",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/version",
+              "host": ["{{baseUrl}}"],
+              "path": ["version"]
+            },
+            "description": "Get API Gateway version information"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2 - gRPC Service (Products)",
+      "description": "Endpoints for the gRPC service for product management, accessed through the API Gateway",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/grpc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health", "grpc"]
+            },
+            "description": "Check if the gRPC service is healthy"
+          },
+          "response": []
+        },
+        {
+          "name": "List All Products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains products array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.products) {",
+                  "        pm.expect(jsonData.products).to.be.an('array');",
+                  "        if (jsonData.products.length > 0) {",
+                  "            var firstProduct = jsonData.products[0];",
+                  "            pm.environment.set(\"product_id\", firstProduct.id);",
+                  "            console.log(\"Set product_id to: \" + firstProduct.id);",
+                  "        } else {",
+                  "            console.log(\"No products found in the response\");",
+                  "        }",
+                  "    } else if (Array.isArray(jsonData)) {",
+                  "        // Handle case where response is direct array",
+                  "        pm.expect(jsonData).to.be.an('array');",
+                  "        if (jsonData.length > 0) {",
+                  "            var firstProduct = jsonData[0];",
+                  "            pm.environment.set(\"product_id\", firstProduct.id);",
+                  "            console.log(\"Set product_id to: \" + firstProduct.id);",
+                  "        }",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", ""]
+            },
+            "description": "Retrieves a list of all products via gRPC service"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Product by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains product details\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    // Handle both direct product or wrapped product",
+                  "    var product = jsonData.product ? jsonData.product : jsonData;",
+                  "    ",
+                  "    pm.expect(product).to.have.property('id');",
+                  "    pm.expect(product).to.have.property('name');",
+                  "    pm.expect(product).to.have.property('description');",
+                  "    pm.expect(product).to.have.property('price');",
+                  "    pm.expect(product).to.have.property('stock');",
+                  "    pm.expect(product).to.have.property('category');",
+                  "    ",
+                  "    // Save product data for potential update",
+                  "    pm.environment.set(\"current_product_name\", product.name);",
+                  "    pm.environment.set(\"current_product_category\", product.category);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{product_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{product_id}}"]
+            },
+            "description": "Retrieves details of a specific product by its ID via gRPC service"
+          },
+          "response": []
+        },
+        {
+          "name": "Create New Product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains created product details\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    // Handle both direct product or wrapped product",
+                  "    var product = jsonData.product ? jsonData.product : jsonData;",
+                  "    ",
+                  "    pm.expect(product).to.have.property('id');",
+                  "    pm.expect(product.name).to.eql(\"gRPC Test Product\");",
+                  "    pm.expect(product.description).to.eql(\"Product created via gRPC\");",
+                  "    pm.expect(product.price).to.eql(79.99);",
+                  "    pm.expect(product.stock).to.eql(15);",
+                  "    pm.expect(product.category).to.eql(\"Test\");",
+                  "    ",
+                  "    // Save the new product ID for other requests",
+                  "    pm.environment.set(\"new_product_id\", product.id);",
+                  "    console.log(\"Set new_product_id to: \" + product.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"gRPC Test Product\",\n    \"description\": \"Product created via gRPC\",\n    \"price\": 79.99,\n    \"stock\": 15,\n    \"category\": \"Test\",\n    \"images\": []\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", ""]
+            },
+            "description": "Creates a new product via gRPC service"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains updated product details\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    // Handle both direct product or wrapped product",
+                  "    var product = jsonData.product ? jsonData.product : jsonData;",
+                  "    ",
+                  "    pm.expect(product).to.have.property('id');",
+                  "    pm.expect(product.name).to.eql(\"Updated gRPC Product\");",
+                  "    pm.expect(product.description).to.eql(\"This product was updated via gRPC\");",
+                  "    pm.expect(product.price).to.eql(89.99);",
+                  "    pm.expect(product.stock).to.eql(10);",
+                  "    pm.expect(product.category).to.eql(\"TestUpdated\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Updated gRPC Product\",\n    \"description\": \"This product was updated via gRPC\",\n    \"price\": 89.99,\n    \"stock\": 10,\n    \"category\": \"TestUpdated\",\n    \"images\": []\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{new_product_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{new_product_id}}"]
+            },
+            "description": "Updates an existing product via gRPC service"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response indicates success\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('success');",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{new_product_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{new_product_id}}"]
+            },
+            "description": "Deletes a product via gRPC service"
+          },
+          "response": []
+        },
+        {
+          "name": "Filter Products by Category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains filtered products array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.products) {",
+                  "        pm.expect(jsonData.products).to.be.an('array');",
+                  "        // Check if all products have the correct category",
+                  "        if (jsonData.products.length > 0) {",
+                  "            jsonData.products.forEach(function(product) {",
+                  "                pm.expect(product.category).to.eql(\"Test\");",
+                  "            });",
+                  "        }",
+                  "    } else if (Array.isArray(jsonData)) {",
+                  "        // Handle case where response is direct array",
+                  "        pm.expect(jsonData).to.be.an('array');",
+                  "        if (jsonData.length > 0) {",
+                  "            jsonData.forEach(function(product) {",
+                  "                pm.expect(product.category).to.eql(\"Test\");",
+                  "            });",
+                  "        }",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/?category=Test",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", ""],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "Test"
+                }
+              ]
+            },
+            "description": "Retrieves products filtered by category via gRPC service"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3 - REST Service",
+      "description": "Endpoints for testing the REST service directly",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["health"]
+            },
+            "description": "Check if the REST service is healthy"
+          },
+          "response": []
+        },
+        {
+          "name": "List All Products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains products array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "    if (jsonData.length > 0) {",
+                  "        var firstProduct = jsonData[0];",
+                  "        pm.environment.set(\"rest_product_id\", firstProduct.id);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/products",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["products"]
+            },
+            "description": "Get all products via REST API"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Product by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains product details\", function () {",
+                  "    var product = pm.response.json();",
+                  "    pm.expect(product).to.have.property('id');",
+                  "    pm.expect(product).to.have.property('name');",
+                  "    pm.expect(product).to.have.property('description');",
+                  "    pm.expect(product).to.have.property('price');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/products/{{rest_product_id}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["products", "{{rest_product_id}}"]
+            },
+            "description": "Get product by ID via REST API"
+          },
+          "response": []
+        },
+        {
+          "name": "Create New Product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains created product\", function () {",
+                  "    var product = pm.response.json();",
+                  "    pm.expect(product).to.have.property('id');",
+                  "    pm.expect(product.name).to.eql(\"REST Test Product\");",
+                  "    pm.environment.set(\"new_rest_product_id\", product.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"REST Test Product\",\n    \"description\": \"Product created via REST API\",\n    \"price\": 49.99,\n    \"stock\": 25,\n    \"category\": \"REST\",\n    \"images\": []\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8081/products",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["products"]
+            },
+            "description": "Create a new product via REST API"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains updated product\", function () {",
+                  "    var product = pm.response.json();",
+                  "    pm.expect(product).to.have.property('id');",
+                  "    pm.expect(product.name).to.eql(\"Updated REST Product\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Updated REST Product\",\n    \"description\": \"This product was updated via REST API\",\n    \"price\": 59.99,\n    \"stock\": 20,\n    \"category\": \"RESTUpdated\",\n    \"images\": []\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8081/products/{{new_rest_product_id}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["products", "{{new_rest_product_id}}"]
+            },
+            "description": "Update a product via REST API"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 204\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/products/{{new_rest_product_id}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["products", "{{new_rest_product_id}}"]
+            },
+            "description": "Delete a product via REST API"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4 - GraphQL Service",
+      "description": "Endpoints for the GraphQL service",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8083/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["health"]
+            },
+            "description": "Check if the GraphQL service is healthy"
+          },
+          "response": []
+        },
+        {
+          "name": "Query All Products",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"query\": \"{ products { id name description price stock category } }\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8083/query",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["query"]
+            },
+            "description": "Query all products via GraphQL"
+          },
+          "response": []
+        },
+        {
+          "name": "Query Product by ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"query\": \"{ product(id: \\\"{{product_id}}\\\") { id name description price stock category } }\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8083/query",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["query"]
+            },
+            "description": "Query a specific product by ID via GraphQL"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Product Mutation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains created product\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.createProduct).to.have.property('id');",
+                  "    pm.environment.set(\"graphql_product_id\", jsonData.data.createProduct.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"query\": \"mutation { createProduct(input: { name: \\\"GraphQL Test Product\\\", description: \\\"Product created via GraphQL\\\", price: 69.99, stock: 30, category: \\\"GraphQL\\\", images: [] }) { id name description price stock category } }\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8083/query",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["query"]
+            },
+            "description": "Create a new product via GraphQL mutation"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Product Mutation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"query\": \"mutation { updateProduct(id: \\\"{{graphql_product_id}}\\\", input: { name: \\\"Updated GraphQL Product\\\", description: \\\"Product updated via GraphQL\\\", price: 79.99, stock: 25, category: \\\"GraphQLUpdated\\\", images: [] }) { id name description price stock category } }\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8083/query",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["query"]
+            },
+            "description": "Update a product via GraphQL mutation"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Product Mutation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"query\": \"mutation { deleteProduct(id: \\\"{{graphql_product_id}}\\\") { success } }\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8083/query",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["query"]
+            },
+            "description": "Delete a product via GraphQL mutation"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5 - Hasura GraphQL",
+      "description": "Tests for the Hasura GraphQL engine",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8090/healthz",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8090",
+              "path": ["healthz"]
+            },
+            "description": "Check if the Hasura GraphQL engine is healthy"
+          },
+          "response": []
+        },
+        {
+          "name": "Query All Products",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Hasura-Admin-Secret",
+                "value": "{{hasura_admin_secret}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"query\": \"{ products { id name description price stock category } }\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8090/v1/graphql",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8090",
+              "path": ["v1", "graphql"]
+            },
+            "description": "Query all products via Hasura GraphQL"
+          },
+          "response": []
+        },
+        {
+          "name": "Query Product by ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Hasura-Admin-Secret",
+                "value": "{{hasura_admin_secret}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"query\": \"{ products(where: {id: {_eq: \\\"{{product_id}}\\\"}}) { id name description price stock category } }\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8090/v1/graphql",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8090",
+              "path": ["v1", "graphql"]
+            },
+            "description": "Query a specific product by ID via Hasura GraphQL"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6 - Kafka Integration",
+      "description": "Tests for Kafka integration and event processing",
+      "item": [
+        {
+          "name": "Trigger Product Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"event_type\": \"product_created\",\n    \"product\": {\n        \"name\": \"Kafka Event Product\",\n        \"description\": \"Product created via Kafka event\",\n        \"price\": 99.99,\n        \"stock\": 50,\n        \"category\": \"Kafka\",\n        \"images\": []\n    }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/kafka/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "kafka", "events"]
+            },
+            "description": "Trigger a Kafka event for product creation"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Kafka Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/kafka/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "kafka", "status"]
+            },
+            "description": "Get the status of Kafka consumers and producers"
+          },
+          "response": []
+        },
+        {
+          "name": "Trigger Inventory Update",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"event_type\": \"inventory_updated\",\n    \"product_id\": \"{{product_id}}\",\n    \"stock_change\": -5,\n    \"reason\": \"Purchase\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/kafka/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "kafka", "events"]
+            },
+            "description": "Trigger a Kafka event for inventory update"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "7 - Frontend Pages",
+      "description": "Endpoints to test frontend HTML pages",
+      "item": [
+        {
+          "name": "Products HTML Page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products.html",
+              "host": ["{{baseUrl}}"],
+              "path": ["products.html"]
+            },
+            "description": "Retrieves the products HTML page"
+          },
+          "response": []
+        },
+        {
+          "name": "Home Page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            },
+            "description": "Retrieves the main home page"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "hasura_admin_secret",
+      "value": "myadminsecretkey",
+      "type": "string"
+    }
+  ]
+} 

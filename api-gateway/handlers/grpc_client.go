@@ -4,10 +4,13 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
-	pb "github.com/yourusername/go-microservices-project/proto/product"
+	pb "github.com/boussaid001/go-microservices-project/proto"
 )
 
 // ProductHandler handles requests for the Product service
@@ -22,21 +25,31 @@ func NewProductHandler(serviceURL string) *ProductHandler {
 	}
 }
 
-// connect returns a mock gRPC client for the product service
-func (h *ProductHandler) connect() (pb.ProductServiceClient, error) {
-	// For now, just create a mock client
-	client := pb.NewProductServiceClient(nil)
-	return client, nil
+// connect establishes a connection to the gRPC service
+func (h *ProductHandler) connect() (pb.ProductServiceClient, context.Context, *grpc.ClientConn, error) {
+	// Set timeout for gRPC client connection
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	
+	// Connect to the gRPC server
+	conn, err := grpc.Dial(h.serviceURL, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	
+	// Create a gRPC client
+	client := pb.NewProductServiceClient(conn)
+	return client, ctx, conn, nil
 }
 
 // GetProducts returns a list of products
 func (h *ProductHandler) GetProducts(c *gin.Context) {
 	// Connect to gRPC service
-	client, err := h.connect()
+	client, ctx, conn, err := h.connect()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	defer conn.Close()
 
 	// Parse query parameters
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -44,7 +57,7 @@ func (h *ProductHandler) GetProducts(c *gin.Context) {
 	category := c.Query("category")
 
 	// Make gRPC request
-	resp, err := client.ListProducts(context.Background(), &pb.ListProductsRequest{
+	resp, err := client.ListProducts(ctx, &pb.ListProductsRequest{
 		Page:     int32(page),
 		Limit:    int32(limit),
 		Category: category,
@@ -61,17 +74,18 @@ func (h *ProductHandler) GetProducts(c *gin.Context) {
 // GetProduct returns a product by ID
 func (h *ProductHandler) GetProduct(c *gin.Context) {
 	// Connect to gRPC service
-	client, err := h.connect()
+	client, ctx, conn, err := h.connect()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	defer conn.Close()
 
 	// Get product ID from URL
 	id := c.Param("id")
 
 	// Make gRPC request
-	resp, err := client.GetProduct(context.Background(), &pb.GetProductRequest{
+	resp, err := client.GetProduct(ctx, &pb.GetProductRequest{
 		Id: id,
 	})
 
@@ -86,11 +100,12 @@ func (h *ProductHandler) GetProduct(c *gin.Context) {
 // CreateProduct creates a new product
 func (h *ProductHandler) CreateProduct(c *gin.Context) {
 	// Connect to gRPC service
-	client, err := h.connect()
+	client, ctx, conn, err := h.connect()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	defer conn.Close()
 
 	// Parse request body
 	var req struct {
@@ -108,7 +123,7 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 	}
 
 	// Make gRPC request
-	resp, err := client.CreateProduct(context.Background(), &pb.CreateProductRequest{
+	resp, err := client.CreateProduct(ctx, &pb.CreateProductRequest{
 		Name:        req.Name,
 		Description: req.Description,
 		Price:       req.Price,
@@ -128,11 +143,12 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 // UpdateProduct updates a product
 func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 	// Connect to gRPC service
-	client, err := h.connect()
+	client, ctx, conn, err := h.connect()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	defer conn.Close()
 
 	// Get product ID from URL
 	id := c.Param("id")
@@ -153,7 +169,7 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 	}
 
 	// Make gRPC request
-	resp, err := client.UpdateProduct(context.Background(), &pb.UpdateProductRequest{
+	resp, err := client.UpdateProduct(ctx, &pb.UpdateProductRequest{
 		Id:          id,
 		Name:        req.Name,
 		Description: req.Description,
@@ -174,17 +190,18 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 // DeleteProduct deletes a product
 func (h *ProductHandler) DeleteProduct(c *gin.Context) {
 	// Connect to gRPC service
-	client, err := h.connect()
+	client, ctx, conn, err := h.connect()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	defer conn.Close()
 
 	// Get product ID from URL
 	id := c.Param("id")
 
 	// Make gRPC request
-	resp, err := client.DeleteProduct(context.Background(), &pb.DeleteProductRequest{
+	resp, err := client.DeleteProduct(ctx, &pb.DeleteProductRequest{
 		Id: id,
 	})
 

@@ -1,231 +1,102 @@
 # Go Microservices Project
 
-A comprehensive microservices-based application showcasing different communication patterns and technologies, built using Go and Docker.
+This project demonstrates a microservices architecture using Go, featuring an API Gateway, gRPC, REST, GraphQL, and Kafka integration.
 
-## Author
-**Mohamed Amine Boussaid**
+## Project Structure
 
-## Table of Contents
-- [Architecture Overview](#architecture-overview)
-- [Services](#services)
-  - [API Gateway](#api-gateway)
-  - [REST User Service](#rest-user-service)
-  - [gRPC Product Service](#grpc-product-service)
-  - [Hasura GraphQL (Reviews)](#hasura-graphql-reviews)
-  - [Kafka Order Service](#kafka-order-service)
-- [Database Structure](#database-structure)
-- [Communication Patterns](#communication-patterns)
-- [Getting Started](#getting-started)
-- [API Documentation](#api-documentation)
-- [Technology Stack](#technology-stack)
+- **api-gateway/**  
+  Contains the API Gateway service that routes requests to the appropriate microservice.  
+  - `cmd/main.go`: Entry point for the API Gateway service.  
+  - `internal/`: Internal packages for the API Gateway.  
+  - `Dockerfile`: Dockerfile for building the API Gateway container.  
+  - `go.mod` & `go.sum`: Go module files for dependency management.
 
-## Architecture Overview
+- **grpc-service/**  
+  Contains the gRPC service for handling product operations.  
+  - `cmd/main.go`: Entry point for the gRPC service.  
+  - `internal/`: Internal packages for the gRPC service.  
+  - `Dockerfile`: Dockerfile for building the gRPC service container.  
+  - `go.mod` & `go.sum`: Go module files for dependency management.
 
-```
-┌─────────────┐     ┌─────────────────────────────────────────────────┐
-│             │     │                                                 │
-│  Frontend   │◄────┤                    API Gateway                  │
-│  (Browser)  │     │                  (Port: 8080)                   │
-│             │     │                                                 │
-└──────┬──────┘     └─┬───────────────────┬───────────────┬──────────┘
-       │              │                   │               │
-       │              │                   │               │
-       ▼              ▼                   ▼               ▼
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐ ┌─────────────┐     ┌─────────────┐
-│             │     │             │     │             │ │             │     │             │
-│   Browser   │     │  REST API   │     │ gRPC Service│ │   Hasura    │◄───┤Kafka Service │
-│  Direct to  │     │ User Service│     │   Product   │ │   GraphQL   │     │   Orders    │
-│   Hasura    │     │ (Port:8081) │     │ (Port:8082) │ │ (Port:8090) │     │             │
-│             │     │             │     │             │ │             │     │             │
-└──────┬──────┘     └──────┬──────┘     └──────┬──────┘ └──────┬──────┘     └──────┬──────┘
-       │                   │                   │               │                   │
-       │                   │                   │               │                   │
-       ▼                   ▼                   ▼               ▼                   ▼
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│             │     │             │     │             │     │             │     │             │
-│  PostgreSQL │     │  PostgreSQL │     │  PostgreSQL │     │  PostgreSQL │     │    Kafka    │
-│  reviewdb   │     │   userdb    │     │  productdb  │     │   orderdb   │     │   Broker    │
-│             │     │             │     │             │     │             │     │             │
-└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
-```
+- **rest-service/**  
+  Contains the REST service for handling product operations.  
+  - `cmd/main.go`: Entry point for the REST service.  
+  - `internal/`: Internal packages for the REST service.  
+  - `Dockerfile`: Dockerfile for building the REST service container.  
+  - `go.mod` & `go.sum`: Go module files for dependency management.
 
-This project demonstrates a microservices architecture with services communicating via different protocols:
-- **REST API**: Used by the User Service
-- **gRPC**: Used by the Product Service
-- **GraphQL**: Used by Hasura for Reviews 
-- **Kafka**: Used for event-driven communication in the Order Service
+- **graphql-service/**  
+  Contains the GraphQL service for handling product operations.  
+  - `cmd/main.go`: Entry point for the GraphQL service.  
+  - `internal/`: Internal packages for the GraphQL service.  
+  - `Dockerfile`: Dockerfile for building the GraphQL service container.  
+  - `go.mod` & `go.sum`: Go module files for dependency management.
 
-## Services
+- **kafka-service/**  
+  Contains the Kafka service for event processing.  
+  - `cmd/main.go`: Entry point for the Kafka service.  
+  - `internal/`: Internal packages for the Kafka service.  
+  - `Dockerfile`: Dockerfile for building the Kafka service container.  
+  - `go.mod` & `go.sum`: Go module files for dependency management.
 
-### API Gateway
-- **Port**: 8080
-- **Role**: Entry point for all client requests
-- **Responsibilities**:
-  - Route requests to appropriate backend services
-  - Serve static frontend files
-  - Proxy GraphQL requests to Hasura
-  - Handle CORS and authentication
-- **Technologies**: Go, Gin Framework
-- **Communication**: HTTP/REST with clients and backend services
+- **frontend/**  
+  Contains the frontend application for interacting with the microservices.  
+  - `index.html`: Main HTML file for the frontend.  
+  - `products.html`: HTML file for the products page.  
+  - `styles.css`: CSS file for styling the frontend.  
+  - `script.js`: JavaScript file for frontend logic.
 
-### REST User Service
-- **Port**: 8081
-- **Role**: Manage user data and authentication
-- **Endpoints**:
-  - `GET /api/users`: List all users
-  - `GET /api/users/:id`: Get user by ID
-  - `POST /api/users`: Create a new user
-  - `PUT /api/users/:id`: Update a user
-  - `DELETE /api/users/:id`: Delete a user
-- **Technologies**: Go, Gin Framework
-- **Storage**: PostgreSQL (userdb)
-- **Communication**: REST/HTTP
+- **docker-compose.yml**  
+  Defines the services, networks, and volumes for the project. It orchestrates the deployment of all microservices, including the API Gateway, gRPC, REST, GraphQL, Kafka, and Hasura.
 
-### gRPC Product Service
-- **Port**: 8082
-- **Role**: Manage product catalog
-- **Operations**:
-  - Get all products
-  - Get product by ID
-  - Create product
-  - Update product
-  - Delete product
-- **Technologies**: Go, gRPC, Protocol Buffers
-- **Storage**: PostgreSQL (productdb)
-- **Communication**: gRPC (binary protocol over HTTP/2)
+- **start-project.sh**  
+  A shell script to start the project. It stops any existing containers, checks for processes using required ports, and starts the services using Docker Compose.
 
-### Hasura GraphQL (Reviews)
-- **Port**: 8090
-- **Role**: Manage product reviews
-- **Operations**:
-  - Query reviews (by ID, by product)
-  - Create reviews
-- **Technologies**: Hasura GraphQL Engine
-- **Storage**: PostgreSQL (reviewdb)
-- **Communication**: GraphQL over HTTP
-- **Schema**:
-  ```graphql
-  type Review {
-    id: String!
-    product_id: String!
-    user_id: String!
-    username: String!
-    rating: Float!
-    comment: String
-    created_at: timestamptz!
-  }
-  ```
+- **postman-collection.json**  
+  A Postman collection for testing all API endpoints of the project.
 
-### Kafka Order Service
-- **Role**: Process and track orders
-- **Events**:
-  - Order Created
-  - Order Updated
-  - Order Status Updated
-- **Technologies**: Go, Kafka
-- **Storage**: PostgreSQL (orderdb)
-- **Communication**: Event-driven messaging via Kafka
+- **postman-environment.json**  
+  A Postman environment file for setting up environment variables for local development.
 
-## Database Structure
+- **README-postman.md**  
+  Documentation on how to use the Postman collection, including import instructions, environment setup, and API references.
 
-Each service has its own dedicated PostgreSQL database:
+- **README.md**  
+  This file, providing an overview of the project, its structure, and instructions for running the project.
 
-### UserDB
-- **Tables**:
-  - `users`: Stores user information (id, name, email, password, created_at)
+## Running the Project
 
-### ProductDB
-- **Tables**:
-  - `products`: Stores product information (id, name, description, price, stock, created_at)
-
-### ReviewDB
-- **Tables**:
-  - `reviews`: Stores review information (id, product_id, user_id, username, rating, comment, created_at)
-
-### OrderDB
-- **Tables**:
-  - `orders`: Stores order information (id, user_id, status, total, created_at)
-  - `order_items`: Stores items in each order (order_id, product_id, quantity, price)
-
-## Communication Patterns
-
-This project demonstrates multiple communication patterns:
-
-1. **Synchronous Communication**:
-   - REST API (User Service)
-   - gRPC (Product Service)
-   - GraphQL (Reviews via Hasura)
-
-2. **Asynchronous Communication**:
-   - Kafka messaging (Order Service)
-
-3. **Client-Service Communication**:
-   - Browser to API Gateway (HTTP/REST)
-   - Browser to Hasura (Direct GraphQL)
-
-4. **Service-to-Service Communication**:
-   - API Gateway to backend services
-
-## Getting Started
-
-### Prerequisites
-- Docker and Docker Compose
-- Go 1.21 or later (for development)
-
-### Running the Application
-1. Clone the repository:
-   ```
-   git clone https://github.com/yourusername/go-microservices-project.git
-   cd go-microservices-project
-   ```
-
-2. Start the services:
-   ```
+1. **Start the Project:**  
+   Run the following command to start all services:  
+   ```bash
    ./start-project.sh
    ```
 
-3. Access the application:
-   - Dashboard: http://localhost:8080
-   - Users page: http://localhost:8080/users.html
-   - Products page: http://localhost:8080/products.html
-   - Reviews page: http://localhost:8080/reviews.html
-   - Orders page: http://localhost:8080/orders.html
-   - Hasura Console: http://localhost:8090
+2. **Access the Services:**  
+   - API Gateway: [http://localhost:8080](http://localhost:8080)
+   - Frontend: [http://localhost:8080/products.html](http://localhost:8080/products.html)
+   - REST Service: [http://localhost:8081](http://localhost:8081)
+   - gRPC Service: [http://localhost:8082](http://localhost:8082) (for client connections)
+   - GraphQL Service: [http://localhost:8083](http://localhost:8083)
+   - Hasura Console: [http://localhost:8090](http://localhost:8090)
+   - Kafka: localhost:29092
+   - Zookeeper: localhost:32181
 
-### Stopping the Application
-```
-docker-compose down
-```
+3. **Testing the APIs:**  
+   Import the Postman collection (`postman-collection.json`) and environment (`postman-environment.json`) into Postman to test all API endpoints.
 
-## API Documentation
+4. **Viewing Logs:**  
+   To view logs, run:  
+   ```bash
+   docker-compose logs -f
+   ```
 
-API documentation is available in the `Docs.json` file, which is a Postman collection that can be imported to test all APIs.
+5. **Stopping the Services:**  
+   To stop all services, run:  
+   ```bash
+   docker-compose down
+   ```
 
-## Technology Stack
+## Conclusion
 
-- **Languages**: Go, JavaScript (frontend)
-- **API Gateway**: Go with Gin framework
-- **Services**:
-  - REST: Go with Gin framework
-  - gRPC: Go with gRPC framework
-  - GraphQL: Hasura Engine
-  - Messaging: Apache Kafka with Go client
-- **Databases**: PostgreSQL
-- **Container Orchestration**: Docker Compose
-- **Frontend**: HTML, CSS, JavaScript
-- **API Technologies**:
-  - REST
-  - gRPC
-  - GraphQL
-  - Event-driven (Kafka)
-
----
-
-## Future Improvements
-
-- Implement authentication and authorization
-- Add service discovery
-- Implement circuit breakers for resilience
-- Add comprehensive logging and monitoring
-- Implement CI/CD pipeline
-- Add unit and integration tests
+This project demonstrates a microservices architecture using Go, featuring an API Gateway, gRPC, REST, GraphQL, and Kafka integration. Each microservice is containerized using Docker, and the project is orchestrated using Docker Compose. The frontend provides a user interface for interacting with the microservices, and the Postman collection provides a comprehensive set of tests for all API endpoints.

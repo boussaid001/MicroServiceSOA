@@ -1,27 +1,35 @@
-FROM golang:1.21-alpine as builder
+FROM golang:1.20-alpine
+
 WORKDIR /app
 
-# Install git and protobuf compiler
-RUN apk add --no-cache git protobuf protobuf-dev
+# Install dependencies
+RUN apk add --no-cache git protobuf-dev
 
-# Copy proto files
-COPY ./proto /app/proto
+# Install protoc-gen-go and protoc-gen-go-grpc
+RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28
+RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
 
-# Copy service code
-COPY ./services/grpc-service /app/services/grpc-service
-WORKDIR /app/services/grpc-service
+# Copy proto files first
+COPY proto/ /app/proto/
 
-# Initialize and set up Go module with dependencies
-RUN go mod init github.com/yourusername/go-microservices-project/services/grpc-service
-RUN go mod edit -require=google.golang.org/grpc@v1.58.3
-RUN go mod edit -replace=github.com/yourusername/go-microservices-project/proto/product=../../proto/product
+# Regenerate proto files
+RUN mkdir -p /app/proto/generated
+RUN protoc --go_out=/app/proto/generated --go-grpc_out=/app/proto/generated -I=/app/proto /app/proto/product.proto
 
-# Build the application
-RUN go mod tidy
-RUN go build -o main cmd/main.go
+# Copy go.mod and go.sum first to leverage Docker cache
+COPY services/grpc-service/go.mod services/grpc-service/go.sum* services/grpc-service/
 
-FROM alpine:latest
-WORKDIR /app
-COPY --from=builder /app/services/grpc-service/main .
+# Install Go modules
+RUN cd services/grpc-service && go mod download && go mod tidy
+
+# Copy the rest of the service code
+COPY services/grpc-service/ services/grpc-service/
+
+# Build the gRPC service
+RUN cd services/grpc-service && go build -o /app/main cmd/main.go
+
+# Expose the gRPC port
 EXPOSE 8082
-CMD ["./main"] 
+
+# Run the service
+CMD ["/app/main"] 

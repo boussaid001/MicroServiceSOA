@@ -2,8 +2,8 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/yourusername/go-microservices-project/api-gateway/config"
-	"github.com/yourusername/go-microservices-project/api-gateway/handlers"
+	"github.com/boussaid001/go-microservices-project/api-gateway/config"
+	"github.com/boussaid001/go-microservices-project/api-gateway/handlers"
 )
 
 // SetupRoutes sets up all the routes for the API Gateway

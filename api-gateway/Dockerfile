@@ -18,7 +18,8 @@ RUN go mod edit -require=github.com/IBM/sarama@v1.42.1
 RUN go mod edit -require=google.golang.org/grpc@v1.58.3
 RUN go mod edit -require=github.com/gin-gonic/gin@v1.9.1
 RUN go mod edit -require=github.com/rogpeppe/go-internal@v1.11.0
-RUN go mod edit -replace=github.com/boussaid001/go-microservices-project/proto/product=../proto/product
+RUN go mod edit -require=github.com/gin-contrib/cors@v1.4.0
+RUN go mod edit -replace=github.com/boussaid001/go-microservices-project/proto=../proto
 
 # Build the application
 RUN go mod tidy
